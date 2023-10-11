@@ -8,13 +8,18 @@ os.environ["KAGGLE_KEY"] = st.secrets["K_KEY"]
 
 import kaggle
 
-@st.cache_data(ttl=3600, show_spinner=False)
-def load_lakes() -> pd.DataFrame:
+@st.cache_resource(ttl=3600, show_spinner="Pobieranie danych")
+def download_dataset() -> None:
     kaggle.api.dataset_download_file(
         dataset="krzysztofkulasik/daily-temperatures-of-lakes-in-poland",
         file_name="lakes_temp.csv",
         path="../lakes_streamlit/data/"
     )
+    return
+
+
+@st.cache_data(ttl=3600, show_spinner="Przetwarzanie danych")
+def load_lakes() -> pd.DataFrame:
     data = pd.read_csv("../lakes_streamlit/data/lakes_temp.csv")
     data = data.replace(
         {
@@ -37,6 +42,7 @@ def load_lakes() -> pd.DataFrame:
 st.title("Temperatura jezior w Polsce")
 
 with st.container():
+    download_dataset()
     df = load_lakes()
 
     selected_region = st.multiselect(
