@@ -133,6 +133,46 @@ def find_available_bathing_water(data: pd.DataFrame, countries: List[str], zone_
     return available_bathing_waters
 
 
+def render_map(data: pd.DataFrame, countries: List[str], zone_types: List[str],
+               bathing_waters_names: List[str]) -> dict:
+    """
+    Create Streamlit map component using streamlit_folium and folium libraries.
+
+    Parameters:
+        data (pd.DataFrame) : DataFrame with points to be displayed on map
+        countries (List[str]) : List of marker's countries to be displayed on map
+        zone_types (List[str]) : List of marker's specialisedZoneType to be displayed on map
+        bathing_waters_names (List[str]) : List of marker's bathing waters names to be displayed on map
+    Returns:
+        events_dict (dict) : Dict-like data of events on map
+    """
+    m = folium.Map(tiles="Cartodb Positron")
+    map_data = data[["countryCode", "nameText", "lon", "lat", "bwProfileUrl", "specialisedZoneType"]].copy()
+    center = (0.0, 0.0)
+    if countries:
+        map_data = map_data[map_data["countryCode"].isin(countries)]
+    if zone_types:
+        map_data = map_data[map_data["specialisedZoneType"].isin(zone_types) & map_data["countryCode"].isin(countries)]
+    if bathing_waters_names:
+        map_data = map_data[map_data["nameText"].isin(bathing_waters_names)]
+
+    if countries:
+        marker_cluster = plugins.MarkerCluster().add_to(m)
+        for _, countryCode, nameText, lon, lat, bwProfileUrl, zone in map_data.itertuples():
+            popup = f"""<b>Name of bathing water:</b>{nameText}<br>
+                            <b>Country:</b>{countryCode}<br>
+                            <b>Zone type:</b>{zone}<br>
+                            <b>Link to bathing water profile:</b> <a href="{bwProfileUrl}" target="_blank">Link</a>"""
+            folium.Marker(
+                location=[lat, lon],
+                tooltip=nameText,
+                popup=popup,
+                lazy=True
+            ).add_to(marker_cluster)
+        center = (map_data["lat"].mean().item(), map_data["lon"].mean().item())
+    events_dict = streamlit_folium.st_folium(m, use_container_width=True, zoom=6, center=center)
+    return events_dict
+
 
 download_dataset()
 with st.container():
@@ -141,7 +181,6 @@ with st.container():
         label="Name of country",
         placeholder="Choose or write name of country",
         options=find_unique_country(df)
-
     )
 
     selected_zone_type = st.multiselect(
@@ -158,6 +197,7 @@ with st.container():
 
     st.dataframe(df[df["nameText"].isin(selected_bathing_water)])
 
-# TODO: Add map TODO: Add geolocation TODO: Add subgroups in map by zoneType TODO: TODO: Add metrics to display short
-#  info about bathing water location (e.q. Water quality for each year or water quality for recent year and period of
-#  monitoring it)
+    m = render_map(df, selected_country, selected_zone_type, selected_bathing_water)
+# TODO: Add subgroups in map by zoneType
+# TODO: Add metrics to display short info about bathing water location
+#  (e.q. Water quality for each year or water quality for recent year and period of monitoring it)
