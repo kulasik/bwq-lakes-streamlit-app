@@ -62,7 +62,7 @@ def load_data() -> pd.DataFrame:
 def process_data(datasets: List[pd.DataFrame]) -> pd.DataFrame:
     """
     Concatenate list of DataFrames and process (drop unnecessary columns, replace values in columns, change type of
-    columns, etc. ) them to single DataFrame
+    columns, add new columns etc.) them to single DataFrame
 
     Parameters:
         datasets (List[pd.DataFrame]) : List of DataFrames to concatenate and process
@@ -71,7 +71,6 @@ def process_data(datasets: List[pd.DataFrame]) -> pd.DataFrame:
         data (pd.DataFrame) : Concatenated and processed DataFrame
 
     """
-    # TODO: Reduce columns, replace values in columns,
     data = pd.concat(datasets, axis=0).reset_index().drop("index", axis=1)
     countries_to_replace = {'BE': 'Belgium', 'EE': 'Estonia', 'NL': 'Netherlands',
                             'IE': 'Ireland', 'AT': 'Austria', 'LT': 'Lithuania', 'LU': 'Luxembourg',
@@ -82,9 +81,92 @@ def process_data(datasets: List[pd.DataFrame]) -> pd.DataFrame:
                             'AL': 'Albania', 'BG': 'Bulgaria', 'CH': 'Switzerland',
                             'FR': 'France', 'PT': 'Portugal', 'DE': 'Germany', 'SK': 'Slovakia'}
 
+    data = data.drop(columns="groupIdentifier")
+    data = data.astype({
+        "countryCode": "string",
+        "bathingWaterIdentifier": "string",
+        "nameText": "string",
+        "specialisedZoneType": "string",
+        "geographicalConstraint": "bool",
+        "lon": "float32",
+        "lat": "float32",
+        "bwProfileUrl": "string",
+        "quality1990": "string", "quality1991": "string",
+        "quality1992": "string", "quality1993": "string",
+        "quality1994": "string", "quality1995": "string",
+        "quality1996": "string", "quality1997": "string",
+        "quality1998": "string", "quality1999": "string",
+        "quality2000": "string", "quality2001": "string",
+        "quality2002": "string", "quality2003": "string",
+        "quality2004": "string", "quality2005": "string",
+        "quality2006": "string", "quality2007": "string",
+        "quality2008": "string", "quality2009": "string",
+        "quality2010": "string", "quality2011": "string",
+        "quality2012": "string", "quality2013": "string",
+        "quality2014": "string", "quality2015": "string",
+        "quality2016": "string", "quality2017": "string",
+        "quality2018": "string", "quality2019": "string",
+        "quality2020": "string", "quality2021": "string",
+        "quality2022": "string",
+        "monitoringCalendar2018": "string", "monitoringCalendar2019": "string",
+        "monitoringCalendar2020": "string", "monitoringCalendar2021": "string",
+        "monitoringCalendar2022": "string",
+        "management2018": "string", "management2019": "string",
+        "management2020": "string", "management2021": "string",
+        "management2022": "string"
+    })
     data = data.replace({"countryCode": countries_to_replace})
-    data = data.astype({"lon": "float32", "lat": "float32"})
+    data = data.rename(columns={
+        "countryCode": "country",
+        "bwProfileUrl": "profileUrl",
+        "nameText": "name",
+        "specialisedZoneType": "zoneType"
+    })
+    data["startOfQualityMeasure"] = data.apply(lambda x: start_of_quality_measurement(x), axis=1)
+    data["monitoringImplementationYear"] = data.apply(lambda x: monitoring_implementation_year(x), axis=1)
     return data
+
+
+def start_of_quality_measurement(org: pd.Series):
+    """
+    Find first year of bathing water quality measurement
+
+    Parameters:
+        org (pd.Series) : Transposed single row of data (columns swapped with rows)
+
+    Returns:
+        index (str) : First year of bathing water quality measurement
+
+    """
+    data = org.copy()
+    mask = data.index.str.startswith("quality")
+    data = data[mask]
+    data = data.reindex([idx.strip() for idx in data.index])
+    data = data[(data.notna()) & (data.str.startswith(("1", "2", "3", "4")))]
+    data = data.dropna(axis=0)
+    index = data.first_valid_index()
+    return index
+
+
+def monitoring_implementation_year(org: pd.Series):
+    """
+    Find year of bathing water quality monitoring implementation
+
+    Parameters:
+        org (pd.Series) : Transposed single row of data (columns swapped with rows)
+
+    Returns:
+        index (str) : Year of bathing water quality monitoring implementation
+
+    """
+    data = org.copy()
+    mask = data.index.str.startswith("monitoringCalendar")
+    data = data.iloc[mask]
+    data = data[(data.notna()) & (data.str.fullmatch("1 - Implemented"))]
+    data = data.dropna(axis=0)
+    index = str(data.first_valid_index())
+    index = index.removeprefix("monitoringCalendar")
+    return index
 
 
 @st.cache_data(show_spinner=False)
@@ -97,7 +179,7 @@ def find_unique_country(data: pd.DataFrame) -> List[str]:
     Returns:
         countries (List[str] : List of unique country names
     """
-    countries = data["countryCode"].unique()
+    countries = data["country"].unique()
     return countries
 
 
@@ -112,7 +194,7 @@ def find_unique_zone_types(data: pd.DataFrame, countries: List[str]) -> List[str
     Returns:
         zone_types (List[str] : List of unique zone types for given country names
     """
-    zone_types = data.loc[(df["countryCode"].isin(countries)), "specialisedZoneType"].unique()
+    zone_types = data.loc[(df["country"].isin(countries)), "zoneType"].unique()
     return zone_types
 
 
@@ -129,7 +211,7 @@ def find_available_bathing_water(data: pd.DataFrame, countries: List[str], zone_
         available_bathing_waters (List[str]) : List of unique names of bathing waters for given countries names and zone types
     """
     available_bathing_waters = data.loc[
-        ((data["countryCode"].isin(countries)) & (data["specialisedZoneType"].isin(zone_types))), "nameText"].unique()
+        ((data["country"].isin(countries)) & (data["zoneType"].isin(zone_types))), "name"].unique()
     return available_bathing_waters
 
 
@@ -147,25 +229,25 @@ def render_map(data: pd.DataFrame, countries: List[str], zone_types: List[str],
         events_dict (dict) : Dict-like data of events on map
     """
     m = folium.Map(tiles="Cartodb Positron")
-    map_data = data[["countryCode", "nameText", "lon", "lat", "bwProfileUrl", "specialisedZoneType"]].copy()
+    map_data = data[["country", "name", "lon", "lat", "profileUrl", "zoneType"]].copy()
     center = (0.0, 0.0)
     if countries:
-        map_data = map_data[map_data["countryCode"].isin(countries)]
+        map_data = map_data[map_data["country"].isin(countries)]
     if zone_types:
-        map_data = map_data[map_data["specialisedZoneType"].isin(zone_types) & map_data["countryCode"].isin(countries)]
+        map_data = map_data[map_data["zoneType"].isin(zone_types) & map_data["country"].isin(countries)]
     if bathing_waters_names:
-        map_data = map_data[map_data["nameText"].isin(bathing_waters_names)]
+        map_data = map_data[map_data["name"].isin(bathing_waters_names)]
 
     if countries:
         marker_cluster = plugins.MarkerCluster().add_to(m)
-        for _, countryCode, nameText, lon, lat, bwProfileUrl, zone in map_data.itertuples():
-            popup = f"""<b>Name of bathing water:</b>{nameText}<br>
-                            <b>Country:</b>{countryCode}<br>
+        for _, country, name, lon, lat, profileUrl, zone in map_data.itertuples():
+            popup = f"""<b>Name of bathing water:</b>{name}<br>
+                            <b>Country:</b>{country}<br>
                             <b>Zone type:</b>{zone}<br>
-                            <b>Link to bathing water profile:</b> <a href="{bwProfileUrl}" target="_blank">Link</a>"""
+                            <b>Link to bathing water profile:</b> <a href="{profileUrl}" target="_blank">Link</a>"""
             folium.Marker(
                 location=[lat, lon],
-                tooltip=nameText,
+                tooltip=name,
                 popup=popup,
                 lazy=True
             ).add_to(marker_cluster)
@@ -174,30 +256,48 @@ def render_map(data: pd.DataFrame, countries: List[str], zone_types: List[str],
     return events_dict
 
 
+st.set_page_config(layout="wide")
 download_dataset()
+col1, col2 = st.columns([0.4, 0.6])
 with st.container():
-    df = load_data()
-    selected_country = st.multiselect(
-        label="Name of country",
-        placeholder="Choose or write name of country",
-        options=find_unique_country(df)
-    )
+    with col1:
+        df = load_data()
+        selected_country = st.multiselect(
+            label="Name of country",
+            placeholder="Choose or write name of country",
+            options=find_unique_country(df)
+        )
 
-    selected_zone_type = st.multiselect(
-        label="Zone type",
-        placeholder="Choose zone type of bathing water",
-        options=find_unique_zone_types(df, selected_country)
-    )
+        selected_zone_type = st.multiselect(
+            label="Zone type",
+            placeholder="Choose zone type of bathing water",
+            options=find_unique_zone_types(df, selected_country)
+        )
 
-    selected_bathing_water = st.multiselect(
-        label="Name of bathing water",
-        placeholder="Choose bathing water",
-        options=find_available_bathing_water(df, selected_country, selected_zone_type)
-    )
+        selected_bathing_water = st.multiselect(
+            label="Name of bathing water",
+            placeholder="Choose bathing water",
+            options=find_available_bathing_water(df, selected_country, selected_zone_type)
+        )
 
-    st.dataframe(df[df["nameText"].isin(selected_bathing_water)])
+        st.dataframe(df[df["name"].isin(selected_bathing_water)])
 
-    m = render_map(df, selected_country, selected_zone_type, selected_bathing_water)
-# TODO: Add subgroups in map by zoneType
+        m = render_map(df, selected_country, selected_zone_type, selected_bathing_water)
+
+    with col2:
+        wq_col, ms_col, mi_col = st.columns([0.3, 0.5, 0.2])
+        with wq_col:
+            st.metric(label="Water quality for 2022:", value="1 - Excellent")
+        with ms_col:
+            st.metric(label="Monitoring status for 2022", value="1 - Continuously monitored")
+        with mi_col:
+            st.metric(label="Monitoring implemented in:", value="2021")
+        st.write(df.dtypes)
+        st.write(df.isna().sum())
+        # with st.expander(label="Past years for recent clicked point:"):
+        # render_past_years_data_for_point()
 # TODO: Add metrics to display short info about bathing water location
 #  (e.q. Water quality for each year or water quality for recent year and period of monitoring it)
+# TODO: Add columns: when implemented monitoring, start of quality, end of quality,
+# Monitoring data starts in 2018
+#
