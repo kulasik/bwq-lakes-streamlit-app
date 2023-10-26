@@ -6,8 +6,8 @@ os.environ["KAGGLE_KEY"] = st.secrets["K_KEY"]
 
 import kaggle
 
-st.set_page_config(page_title="Hello in my kingdom", layout="centered")
-st.title("Hello in my streamlit app")
+st.set_page_config(page_title="Welcome in my streamlit app", layout="centered")
+st.title("Welcome in my streamlit app")
 tab1, tab2 = st.tabs(["English", "Polish"])
 
 with tab1:
