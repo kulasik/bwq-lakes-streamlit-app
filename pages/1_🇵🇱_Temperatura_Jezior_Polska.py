@@ -10,17 +10,25 @@ import kaggle
 
 @st.cache_resource(ttl=3600, show_spinner="Pobieranie danych")
 def download_dataset() -> None:
+    """Download dataset from kaggle """
     kaggle.api.dataset_download_file(
         dataset="krzysztofkulasik/daily-temperatures-of-lakes-in-poland",
         file_name="lakes_temp.csv",
-        path="../lakes_streamlit/data/"
+        path="../data/"
     )
     return
 
 
 @st.cache_data(ttl=3600, show_spinner="Przetwarzanie danych")
 def load_lakes() -> pd.DataFrame:
-    data = pd.read_csv("../lakes_streamlit/data/lakes_temp.csv")
+    """
+    Load and process dataset (rename columns, assign types to columns).
+
+    Returns:
+        data (pd.DataFrame) : DataFrame that contains concatenated files from dataset
+    """
+
+    data = pd.read_csv("../data/lakes_temp.csv")
     data = data.replace(
         {
             "Temperatura wody[°C]": "brak danych"
@@ -39,12 +47,12 @@ def load_lakes() -> pd.DataFrame:
     return data
 
 
+st.set_page_config(page_title="Temperatura jezior w Polsce", layout="wide", page_icon="🇵🇱")
 st.title("Temperatura jezior w Polsce")
 
 with st.container():
     download_dataset()
     df = load_lakes()
-
     selected_region = st.multiselect(
         label="Nazwa województwa",
         placeholder="Wybierz lub wpisz nazwę województwa",
