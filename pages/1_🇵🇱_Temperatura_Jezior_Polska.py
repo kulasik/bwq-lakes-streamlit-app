@@ -1,12 +1,8 @@
 import pandas as pd
 import streamlit as st
 import plotly.express as px
-import os
-
-os.environ["KAGGLE_USERNAME"] = st.secrets["K_USER"]
-os.environ["KAGGLE_KEY"] = st.secrets["K_KEY"]
-
 import kaggle
+
 
 @st.cache_resource(ttl=3600, show_spinner="Pobieranie danych")
 def download_dataset() -> None:
