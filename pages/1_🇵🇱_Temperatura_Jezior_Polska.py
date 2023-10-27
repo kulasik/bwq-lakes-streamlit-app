@@ -58,7 +58,8 @@ with st.container():
         label="Nazwa stacji",
         placeholder="Wybierz lub wpisz nazwę stacji",
         options=df.loc[df["Województwo"].isin(selected_region), "Nazwa stacji"].unique() if len(selected_region) > 0
-        else df["Nazwa stacji"].unique()
+        else df["Nazwa stacji"].unique(),
+        max_selections=3
     )
 
     if len(selected_lake) == 0:
@@ -89,9 +90,17 @@ with st.container():
                                (df['Nazwa stacji'].isin(selected_lake))
                                ]
 
-            st.dataframe(
-                selected_data
-            )
+            # To consider
+            # st.subheader("Temperatura z ostatniego pomiaru:")
+            # day, stat, temp = st.columns(3)
+            #
+            # for station in selected_lake:
+            #     station_row = df.query("`Nazwa stacji` == @station")
+            #     last_day = station_row["Data"].max()
+            #     last_day_temp = station_row.query("Data == @last_day")['Temperatura wody'].values[0]
+            #     day.metric(label="Dzień", value=str(last_day))
+            #     stat.metric(label="Stacja", value=station)
+            #     temp.metric(label="Temperatura", value=last_day_temp)
 
             st.plotly_chart(
                 px.line(
@@ -101,4 +110,8 @@ with st.container():
                     color="Nazwa stacji",
                     markers=True
                 )
+            )
+
+            st.dataframe(
+                selected_data
             )
