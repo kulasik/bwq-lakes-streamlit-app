@@ -233,7 +233,7 @@ def render_map(data: pd.DataFrame, countries: List[str], zone_types: List[str],
     Returns:
         events_dict (dict) : Dict-like data of events on map
     """
-    m = folium.Map(tiles="Cartodb Positron")
+    m = folium.Map(tiles="OpenStreetMap")
     map_data = data[["country", "name", "lon", "lat", "profileUrl", "zoneType"]].copy()
     center = (0.0, 0.0)
     if countries:
