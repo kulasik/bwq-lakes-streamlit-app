@@ -310,7 +310,8 @@ with st.container():
         selected_country = st.multiselect(
             label="Name of country",
             placeholder="Choose or write name of country",
-            options=find_unique_country(df)
+            options=find_unique_country(df),
+            max_selections=3
         )
 
         selected_zone_type = st.multiselect(
@@ -322,7 +323,8 @@ with st.container():
         selected_bathing_water = st.multiselect(
             label="Name of bathing water",
             placeholder="Choose bathing water",
-            options=find_available_bathing_water(df, selected_country, selected_zone_type)
+            options=find_available_bathing_water(df, selected_country, selected_zone_type),
+            max_selections=10
         )
 
         map_events = render_map(df, selected_country, selected_zone_type, selected_bathing_water)
