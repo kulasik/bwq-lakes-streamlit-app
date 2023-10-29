@@ -7,7 +7,8 @@ import streamlit as st
 import os
 from folium import plugins
 
-if os.path.exists("../lakes_streamlit/.streamlit/secrets.toml"):
+if ((not os.path.exists(os.path.expanduser("~/.kaggle/kaggle.json")))
+        and (not os.path.exists("/home/appuser/.kaggle/kaggle.json"))):
     os.environ["KAGGLE_USERNAME"] = st.secrets["K_USER"]
     os.environ["KAGGLE_KEY"] = st.secrets["K_KEY"]
 

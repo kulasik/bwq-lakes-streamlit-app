@@ -4,9 +4,11 @@ import plotly.express as px
 import os
 import re
 import tabula
-from os.path import isfile, join
+from os.path import join
 
-if os.path.exists("../lakes_streamlit/.streamlit/secrets.toml"):
+
+if ((not os.path.exists(os.path.expanduser("~/.kaggle/kaggle.json")))
+        and (not os.path.exists("/home/appuser/.kaggle/kaggle.json"))):
     os.environ["KAGGLE_USERNAME"] = st.secrets["K_USER"]
     os.environ["KAGGLE_KEY"] = st.secrets["K_KEY"]
 
@@ -39,6 +41,7 @@ def export_date(filename) -> str:
         date = f'{match[:4]}-{match[4:6]}-{match[6:8]}'
         return date
 
+
 @st.cache_data(ttl=3600, show_spinner="Przetwarzanie danych")
 def load_lakes() -> pd.DataFrame:
     """
@@ -52,7 +55,7 @@ def load_lakes() -> pd.DataFrame:
     pdfs = {}
     for root, _, files in os.walk(pdf_dir):
         for filename in files:
-            pdfs[export_date(filename)] = join(root,filename)
+            pdfs[export_date(filename)] = join(root, filename)
 
     concat_pdfs = pd.DataFrame(columns=["Data", "Nazwa stacji", "Lokalizacja", "Województwo", "Temperatura wody"])
 
@@ -88,6 +91,7 @@ st.set_page_config(page_title="Temperatura jezior w Polsce", layout="wide", page
 st.title("Temperatura jezior w Polsce")
 
 with st.container():
+    st.write(os.listdir("/usr/lib"))
     download_dataset()
     df = load_lakes()
     st.write(df)
