@@ -1,19 +1,43 @@
 import pandas as pd
 import streamlit as st
 import plotly.express as px
+import os
+import re
+import tabula
+from os.path import isfile, join
+
+if os.path.exists("../lakes_streamlit/.streamlit/secrets.toml"):
+    os.environ["KAGGLE_USERNAME"] = st.secrets["K_USER"]
+    os.environ["KAGGLE_KEY"] = st.secrets["K_KEY"]
+
 import kaggle
 
 
 @st.cache_resource(ttl=3600, show_spinner="Pobieranie danych")
 def download_dataset() -> None:
     """Download dataset from kaggle """
-    kaggle.api.dataset_download_file(
-        dataset="krzysztofkulasik/daily-temperatures-of-lakes-in-poland",
-        file_name="lakes_temp.csv",
-        path="../data/"
+    kaggle.api.dataset_download_files(
+        dataset="krzysztofkulasik/daily-temperatures-of-lakes-poland",
+        path="../lakes_streamlit/data/lakes/pdf",
+        unzip=True
     )
     return
 
+
+def export_date(filename) -> str:
+    """
+    Exporting date from filename
+    Parameters:
+        filename (str) : Filename of the pdf
+    Returns:
+        date (str) : Date in format "RRRR-MM-DD
+    """
+    pattern = r'([0-9]{8})'
+    matches = re.search(pattern, filename)
+    if matches.group(0) is not None:
+        match = matches.group(0)
+        date = f'{match[:4]}-{match[4:6]}-{match[6:8]}'
+        return date
 
 @st.cache_data(ttl=3600, show_spinner="Przetwarzanie danych")
 def load_lakes() -> pd.DataFrame:
@@ -24,14 +48,31 @@ def load_lakes() -> pd.DataFrame:
         data (pd.DataFrame) : DataFrame that contains concatenated files from dataset
     """
 
-    data = pd.read_csv("../data/lakes_temp.csv")
-    data = data.replace(
+    pdf_dir = "../lakes_streamlit/data/lakes/pdf"
+    pdfs = {}
+    for root, _, files in os.walk(pdf_dir):
+        for filename in files:
+            pdfs[export_date(filename)] = join(root,filename)
+
+    concat_pdfs = pd.DataFrame(columns=["Data", "Nazwa stacji", "Lokalizacja", "Województwo", "Temperatura wody"])
+
+    for date, filename in pdfs.items():
+        df_pdf = tabula.read_pdf(filename, lattice=True)[0]
+        df_pdf.dropna(axis=1, inplace=True)
+        df_pdf.drop(columns='Lp.', inplace=True)
+
+        df_pdf.rename(columns={'Temperatura wody\robserwator\r[°C]': 'Temperatura wody'}, inplace=True)
+        df_pdf['Data'] = date
+
+        concat_pdfs = pd.concat([concat_pdfs, df_pdf], axis=0)
+        concat_pdfs.drop_duplicates(subset=['Data', 'Nazwa stacji', 'Lokalizacja'], keep='first', inplace=True)
+
+    data = concat_pdfs.replace(
         {
-            "Temperatura wody[°C]": "brak danych"
+            "Temperatura wody": "brak danych"
         },
         0
     )
-    data = data.rename(columns={"Temperatura wody[°C]": "Temperatura wody"})
     data = data.astype({
         "Data": "datetime64[ns]",
         "Nazwa stacji": "string",
@@ -49,6 +90,7 @@ st.title("Temperatura jezior w Polsce")
 with st.container():
     download_dataset()
     df = load_lakes()
+    st.write(df)
     selected_region = st.multiselect(
         label="Nazwa województwa",
         placeholder="Wybierz lub wpisz nazwę województwa",

@@ -1,8 +1,9 @@
 import streamlit as st
 import os
 
-os.environ["KAGGLE_USERNAME"] = st.secrets["K_USER"]
-os.environ["KAGGLE_KEY"] = st.secrets["K_KEY"]
+if os.path.exists("../lakes_streamlit/.streamlit/secrets.toml"):
+    os.environ["KAGGLE_USERNAME"] = st.secrets["K_USER"]
+    os.environ["KAGGLE_KEY"] = st.secrets["K_KEY"]
 
 import kaggle
 
@@ -13,12 +14,12 @@ tab1, tab2 = st.tabs(["English", "Polish"])
 with tab1:
     st.header("Temperatura jezior w Polsce")
     st.markdown(
-        "The purpose of this application is to check the temperature of selected bathing waters in Poland, data obtained from IMGW."
+        "The purpose of this app is to check the temperature of selected bathing waters in Poland, data obtained from IMGW."
         " Currently available data are from May - September of 2023."
     )
     st.header("Bathing Water Quality for EU")
     st.markdown(
-        "The purpose of this application is to check the quality of bathing water in the European Union for the years 1990 - 2022."
+        "The purpose of this app is to check the quality of bathing water in the European Union for the years 1990 - 2022."
         "To check details of the point you can use selectbox or map."
     )
 

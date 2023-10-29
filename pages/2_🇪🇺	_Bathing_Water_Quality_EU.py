@@ -4,9 +4,14 @@ import pandas as pd
 import folium
 import streamlit_folium
 import streamlit as st
-import kaggle
 import os
 from folium import plugins
+
+if os.path.exists("../lakes_streamlit/.streamlit/secrets.toml"):
+    os.environ["KAGGLE_USERNAME"] = st.secrets["K_USER"]
+    os.environ["KAGGLE_KEY"] = st.secrets["K_KEY"]
+
+import kaggle
 
 
 @st.cache_resource(show_spinner="Downloading data")
