@@ -1,13 +1,11 @@
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://bathing-water.streamlit.app)
 # Bathing water quality and lakes temperatures - Multi page streamlit app
 ## About project
-***
 App is made out of 3 pages:
 * `Hello` - Welcome/About page
 * `Temperatura Jezior Polska` - Daily temperatures of lakes in Poland for May - September 2023 (chart)
 * `Bathing Water Quality EU` - Bathing water quality in EU for 1990 - 2022 (map, detailed info) 
 ## Built with
-***
 ### Libraries
 
 [![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)](https://streamlit.com)
@@ -22,8 +20,6 @@ App is made out of 3 pages:
 * [Daily temperatures of lakes in Poland for 2023](https://www.kaggle.com/datasets/krzysztofkulasik/daily-temperatures-of-lakes-poland)
 
 ## Getting Started
-***
-
 ### Installation
 1. [Download](https://www.kaggle.com/docs/api#authentication) kaggle.json with kaggle api credentials
 * Place file kaggle.json in `~/.kaggle/kaggle.json`
@@ -46,6 +42,5 @@ pip install -r requirements.txt
 streamlit run Hello.py
 ```
 ## Contact
-***
 [![Linkedin](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/kkulasik)
 [![Kaggle](https://img.shields.io/badge/Kaggle-20BEFF?style=for-the-badge&logo=Kaggle&logoColor=white)](https://www.kaggle.com/krzysztofkulasik)
