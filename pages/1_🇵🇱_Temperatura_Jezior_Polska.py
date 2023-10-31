@@ -91,10 +91,8 @@ st.set_page_config(page_title="Temperatura jezior w Polsce", layout="wide", page
 st.title("Temperatura jezior w Polsce")
 
 with st.container():
-    st.write(os.listdir("/usr/lib"))
     download_dataset()
     df = load_lakes()
-    st.write(df)
     selected_region = st.multiselect(
         label="Nazwa województwa",
         placeholder="Wybierz lub wpisz nazwę województwa",
@@ -134,7 +132,7 @@ with st.container():
             selected_data = df[(df['Data'] >= start_date) &
                                (df['Data'] <= end_date) &
                                (df['Nazwa stacji'].isin(selected_lake))
-                               ]
+                               ].sort_values(by="Data")
 
             # To consider
             # st.subheader("Temperatura z ostatniego pomiaru:")
