@@ -20,6 +20,12 @@ App is made out of 3 pages:
 * [Daily temperatures of lakes in Poland for 2023](https://www.kaggle.com/datasets/krzysztofkulasik/daily-temperatures-of-lakes-poland)
 
 ## Getting Started
+### Prerequisites
+* Java 8+
+* Python 3.10
+```shell
+sudo apt install python3 openjdk-17-jre
+```
 ### Installation
 1. [Download](https://www.kaggle.com/docs/api#authentication) kaggle.json with kaggle api credentials
 * Place file kaggle.json in `~/.kaggle/kaggle.json`
