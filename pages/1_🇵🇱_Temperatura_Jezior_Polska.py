@@ -5,13 +5,6 @@ import os
 import re
 import tabula
 from os.path import join
-
-
-if ((not os.path.exists(os.path.expanduser("~/.kaggle/kaggle.json")))
-        and (not os.path.exists("/home/appuser/.kaggle/kaggle.json"))):
-    os.environ["KAGGLE_USERNAME"] = st.secrets["K_USER"]
-    os.environ["KAGGLE_KEY"] = st.secrets["K_KEY"]
-
 import kaggle
 
 

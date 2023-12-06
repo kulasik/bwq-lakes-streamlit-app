@@ -1,11 +1,5 @@
 import streamlit as st
 import os
-
-if ((not os.path.exists(os.path.expanduser("~/.kaggle/kaggle.json")))
-        and (not os.path.exists("/home/appuser/.kaggle/kaggle.json"))):
-    os.environ["KAGGLE_USERNAME"] = st.secrets["K_USER"]
-    os.environ["KAGGLE_KEY"] = st.secrets["K_KEY"]
-
 import kaggle
 
 st.set_page_config(page_title="Welcome in my streamlit app", layout="centered")
