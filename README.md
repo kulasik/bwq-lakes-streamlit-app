@@ -38,9 +38,10 @@ docker build -t bwq-ls-image .
 3. Run container
 ```shell
 docker run --name bwq-ls-container \
--p 80:80 -d bwq-ls-image \
+-p 80:80 -d \
 -e KAGGLE_USERNAME=YOUR-KAGGLE-USERNAME \
--e KAGGLE_KEY=YOUR-KAGGLE-KEY
+-e KAGGLE_KEY=YOUR-KAGGLE-KEY \
+bwq-ls-image
 ```
 
 ## Contact
